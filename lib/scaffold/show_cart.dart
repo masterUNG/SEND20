@@ -43,6 +43,11 @@ class _ShowCartState extends State<ShowCart> {
 
   String myDistance;
 
+  List<List<String>> listNameOptions = List();
+  List<List<String>> listPriceOptions = List();
+  List<List<String>> listSizeOptions = List();
+  List<List<String>> listSumOptions = List();
+
   // Method
   @override
   void initState() {
@@ -81,9 +86,34 @@ class _ShowCartState extends State<ShowCart> {
 
     try {
       var object = await SQLiteHelper().readDatabase();
-      print("แสดงจำนวน Record SQLite ==>> ${object.length}");
+      // print("แสดงจำนวน Record SQLite ==>> ${object.length}");
       if (object.length != 0) {
         orderModels = object;
+
+        for (var model in orderModels) {
+          String string = model.nameOption;
+          string = string.substring(1, string.length - 1);
+          List<String> nameOptions = string.split(',');
+          int index = 0;
+          for (var string1 in nameOptions) {
+            nameOptions[index] = string1.trim();
+            index++;
+          }
+
+          String price = model.priceOption;
+          price = price.substring(1, price.length - 1);
+          List<String> priceOptions = price.split(',');
+          int indexPrice = 0;
+          for (var string1 in priceOptions) {
+            priceOptions[indexPrice] = string1.trim();
+            indexPrice++;
+          }
+
+          setState(() {
+            listNameOptions.add(nameOptions);
+            listPriceOptions.add(priceOptions);
+          });
+        }
 
         totalDelivery = int.parse(orderModels[0].transport);
 
@@ -252,7 +282,6 @@ class _ShowCartState extends State<ShowCart> {
         priceOption,
         sumPrice,
         transport;
-        
 
     UserShopModel userShopModel =
         await MyAPI().findDetailShopWhereId(idShopOnSQLites[0].toString());
@@ -428,71 +457,94 @@ class _ShowCartState extends State<ShowCart> {
                   decoration: BoxDecoration(
                       color:
                           index % 2 == 0 ? Colors.grey.shade300 : Colors.white),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Expanded(
-                        flex: 3,
-                        child: Container(
-                          padding: EdgeInsets.only(left: 8),
-                          child: Column(
-                            children: <Widget>[
-                              Row(
-                                children: [
-                                  Text(
-                                    orderModels[index].nameFood,
-                                    style: MyStyle().h2Style,
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Expanded(
+                            flex: 3,
+                            child: Container(
+                              padding: EdgeInsets.only(left: 8),
+                              child: Column(
+                                children: <Widget>[
+                                  Row(
+                                    children: [
+                                      Text(
+                                        orderModels[index].nameFood,
+                                        style: MyStyle().h2Style,
+                                      ),
+                                    ],
                                   ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        orderModels[index].remark,
+                                      ),
+                                    ],
+                                  )
                                 ],
                               ),
-                              Row(
-                                children: [
-                                  Text(
-                                    orderModels[index].remark,
-                                  ),
-                                ],
-                              )
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Text(
-                              orderModels[index].amountFood,
-                              style: MyStyle().h2NormalStyle,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Text(
-                              calculateTotal(orderModels[index].priceFood,
-                                  orderModels[index].amountFood),
-                              style: MyStyle().h2NormalStyle,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Row(
-                          children: <Widget>[
-                            IconButton(
-                                icon: Icon(
-                                  Icons.delete_forever,
-                                  color: MyStyle().dartColor,
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Text(
+                                  orderModels[index].amountFood,
+                                  style: MyStyle().h2NormalStyle,
                                 ),
-                                onPressed: () {
-                                  confirmAnDelete(orderModels[index]);
-                                }),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Text(
+                                  calculateTotal(orderModels[index].priceFood,
+                                      orderModels[index].amountFood),
+                                  style: MyStyle().h2NormalStyle,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: Row(
+                              children: <Widget>[
+                                IconButton(
+                                    icon: Icon(
+                                      Icons.delete_forever,
+                                      color: MyStyle().dartColor,
+                                    ),
+                                    onPressed: () {
+                                      confirmAnDelete(orderModels[index]);
+                                    }),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: ScrollPhysics(),
+                        itemCount: listNameOptions[index].length,
+                        itemBuilder: (context, index2) => Row(
+                          children: [
+                            Expanded(flex: 3,
+                              child: Text(
+                                listNameOptions[index][index2],
+                              ),
+                            ),
+                            Expanded(flex: 1,
+                              child: Text(
+                                listPriceOptions[index][index2],
+                              ),
+                            ),
                           ],
                         ),
                       ),

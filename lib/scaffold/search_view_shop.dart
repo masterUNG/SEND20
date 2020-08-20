@@ -11,8 +11,14 @@ class SearchViewShop extends StatefulWidget {
   final List<UserShopModel> userShopModels;
   final String nameLocalChoose;
   final List<String> distances;
+  final double latChoose, lngChoose;
 
-  SearchViewShop({this.userShopModels, this.nameLocalChoose, this.distances});
+  SearchViewShop(
+      {this.userShopModels,
+      this.nameLocalChoose,
+      this.distances,
+      this.latChoose,
+      this.lngChoose});
   @override
   _SearchViewShopState createState() => _SearchViewShopState();
 }
@@ -36,6 +42,9 @@ class _SearchViewShopState extends State<SearchViewShop> {
   List<UserShopModel> userShopModels;
   List<UserShopModel> filterUserShopModels = List();
 
+  List<String> distances;
+  List<String> filterDistances = List();
+
   final Debouncer debouncer = Debouncer(mill: 500);
 
   @override
@@ -43,14 +52,16 @@ class _SearchViewShopState extends State<SearchViewShop> {
     // TODO: implement initState
     super.initState();
     if (filterUserShopModels.length != 0) {
-      print('initStat Work');
-
+      // print('initStat Work');
       filterUserShopModels.clear();
     }
 
     userShopModels = widget.userShopModels;
     filterUserShopModels = userShopModels;
     //print('userShopModels.leght===== ${userShopModels.length}');
+
+    distances = widget.distances;
+    filterDistances = distances;
   }
 
   @override
@@ -121,12 +132,12 @@ class _SearchViewShopState extends State<SearchViewShop> {
             },
             child: ListTile(
               leading: CircleAvatar(
-                backgroundImage: NetworkImage(filterUserShopModels[index].urlShop),
+                backgroundImage:
+                    NetworkImage(filterUserShopModels[index].urlShop),
               ),
               title: Text(filterUserShopModels[index].name),
               subtitle: Text(filterUserShopModels[index].detailShop),
               trailing: Icon(Icons.keyboard_arrow_right),
-             
             )
             //Text(filterUserShopModels[index].name),
             ),

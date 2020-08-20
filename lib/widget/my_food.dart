@@ -12,7 +12,13 @@ import 'package:foodlion/scaffold/show_food.dart';
 import 'package:foodlion/utility/my_api.dart';
 import 'package:foodlion/utility/my_style.dart';
 import 'package:foodlion/utility/sqlite_helper.dart';
+import 'package:location/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/send_location_model.dart';
+import '../models/user_shop_model.dart';
+import '../utility/my_api.dart';
+import '../utility/my_api.dart';
 
 class MyFood extends StatefulWidget {
   final String idShop;
@@ -78,6 +84,18 @@ class _MyFoodState extends State<MyFood> {
     lngChoose = widget.lng;
     distance = widget.distance;
 
+    if (distance == null) {
+      // print('distance ==>>>>>>>>>> null');
+      // print(
+      //     'nameLocalChoose ที่ได้จาก Search View #####################=====>>>> $nameLocalChoose');
+
+      if (nameLocalChoose == 'ตำแหน่งปัจจุบัน') {
+        findCurentLocation();
+      } else {
+        findLocationByAPI();
+      }
+    }
+
     readAllFood();
     checkAmount();
     calculateTransportFromDistance();
@@ -87,11 +105,9 @@ class _MyFoodState extends State<MyFood> {
     //print('distance  ==== ==  $distance');
 
     double distanceDou = double.parse(distance);
+
     int distanceInt = distanceDou.ceil();
-
     int i = await MyAPI().checkTransport(distanceInt);
-
-    print('i ###### $i');
     setState(() {
       transportInt = i;
     });
@@ -357,14 +373,22 @@ class _MyFoodState extends State<MyFood> {
 
   Widget showDistanceNameLocal() {
     return Padding(
-      padding: const EdgeInsets.only(top: 10, left: 10, right: 10,),
+      padding: const EdgeInsets.only(
+        top: 10,
+        left: 10,
+        right: 10,
+      ),
       child: Row(
-        
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-
-          Text('ส่งที่ $nameLocalChoose',style: MyStyle().h2Stylegreen,),
-          Text(transportInt == null ? '' : 'ค่าส่ง $transportInt บาท', style: MyStyle().h2Stylegreen,),
+          Text(
+            'ส่งที่ $nameLocalChoose',
+            style: MyStyle().h2Stylegreen,
+          ),
+          Text(
+            transportInt == null ? '' : 'ค่าส่ง $transportInt บาท',
+            style: MyStyle().h2Stylegreen,
+          ),
         ],
       ),
     );
@@ -382,4 +406,61 @@ class _MyFoodState extends State<MyFood> {
             child: Text('ไม่มีรูปภาพ'),
           ),
         );
+
+  Future<Null> findCurentLocation() async {
+    try {
+      LocationData data = await findLoctionData();
+      latChoose = data.latitude;
+      lngChoose = data.longitude;
+      print(
+          'การหาพิกัดแบบ ธรรรมดา latChoose, lngChoose = $latChoose, $lngChoose');
+      findDistance();
+    } catch (e) {}
+  }
+
+  Future<LocationData> findLoctionData() async {
+    Location location = Location();
+    try {
+      return await location.getLocation();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<Null> findLocationByAPI() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    String idUser = preferences.getString('id');
+    print('idUser =====>>>> $idUser');
+    String url =
+        'http://movehubs.com/app/getUserWhereIdUserAndNameLocation.php?isAdd=true&idUser=$idUser&NameLocation=$nameLocalChoose';
+    Response response = await Dio().get(url);
+    var result = json.decode(response.data);
+    for (var json in result) {
+      SendLocationModeil modeil = SendLocationModeil.fromJson(json);
+      latChoose = double.parse(modeil.lat.trim());
+      lngChoose = double.parse(modeil.lng.trim());
+      // print(
+      //     'พีิกัน user จาก $nameLocalChoose ========>>>>> $latChoose, $lngChoose');
+      findDistance();
+    }
+  }
+
+  Future<Null> findDistance() async {
+    UserShopModel userShopModel = await MyAPI().findDetailShopWhereId(myIdShop);
+    double latShop = double.parse(userShopModel.lat.trim());
+    double lngShop = double.parse(userShopModel.lng.trim());
+    print('lat, lng ของ Shop =====>>> $latShop, $lngShop');
+
+    double distanceDou =
+        MyAPI().calculateDistance(latChoose, lngChoose, latShop, lngShop);
+    print('distanceDou ==================>>>>>>> $distanceDou');
+
+    int distanceInt = distanceDou.ceil();
+    int i = await MyAPI().checkTransport(distanceInt);
+
+    setState(() {
+      distance = distanceDou.toString();
+       transportInt = i;
+    });
+  }
 }

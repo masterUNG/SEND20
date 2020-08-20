@@ -297,7 +297,7 @@ class _MainHomeState extends State<MainHome> {
           setState(() {
             userShopModels.add(model);
             statusLoad = false;
-            if (distance <= 40.0) {
+            if (distance <= 400.0) {
               distances.add(distanceString);
               nearShopModels.add(model);
 
@@ -710,6 +710,7 @@ class _MainHomeState extends State<MainHome> {
               userShopModels: nearShopModels,
               nameLocalChoose: nameLocalChoose,
               distances: distances,
+              
             ),
           )),
     );
